@@ -1,0 +1,130 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+    <link rel="stylesheet" href="../css/login.css" />
+
+    <title>Login TRSS</title>
+  </head>
+
+  <body>
+    <div class="container-login">
+      <div class="lado-esquerdo">
+        <img src="../imagens/logo.png" alt="Logo TRSS" />
+
+        <h1>Seja bem vindo!</h1>
+      </div>
+
+      <div class="caixa-login">
+        <h2>Faça seu login como gerente!</h2>
+
+        <form id="formLogin">
+          <label for="email">Email</label>
+
+          <div class="email-container">
+            <input
+              type="email"
+              id="email"
+              placeholder="Digite seu email"
+              required
+            />
+          </div>
+
+          <label for="senha">Senha</label>
+
+          <div class="senha-container">
+            <input
+              type="password"
+              id="senha"
+              placeholder="Digite sua senha"
+              required
+            />
+          </div>
+
+          <button type="submit" class="acessar" id="botaoAcessar">
+            Acessar
+          </button>
+        </form>
+
+        <p id="mensagem"></p>
+
+        <p class="cadastro">
+          Não tem uma conta?
+          <a href="cadastro.html"> Registra-se aqui! </a>
+        </p>
+      </div>
+    </div>
+
+    <script>
+      const API_URL = "http://localhost:3000";
+
+      const form = document.getElementById("formLogin");
+      const mensagem = document.getElementById("mensagem");
+      const botao = document.getElementById("botaoAcessar");
+
+      form.addEventListener("submit", async (evento) => {
+        evento.preventDefault();
+
+        const email = document.getElementById("email").value.trim();
+        const senha = document.getElementById("senha").value;
+
+        mensagem.textContent = "";
+        mensagem.className = "";
+
+        if (!email || !senha) {
+          mensagem.textContent = "Digite o email e a senha.";
+          mensagem.className = "erro";
+          return;
+        }
+
+        botao.disabled = true;
+        botao.textContent = "Entrando...";
+
+        try {
+          const resposta = await fetch(`${API_URL}/login`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ email, senha }),
+          });
+
+          const resultado = await resposta.json();
+
+          if (!resposta.ok) {
+            mensagem.textContent =
+              resultado.mensagem || "Email ou senha incorretos.";
+            mensagem.className = "erro";
+            return;
+          }
+
+          if (!resultado.usuario) {
+            mensagem.textContent = "Não foi possível encontrar o usuário.";
+            mensagem.className = "erro";
+            return;
+          }
+
+          if (resultado.usuario.papel !== "gerente") {
+            mensagem.textContent = "Essa conta não é de gerente.";
+            mensagem.className = "erro";
+            return;
+          }
+
+          localStorage.setItem(
+            "supabase_session",
+            JSON.stringify(resultado.session),
+          );
+          localStorage.setItem("usuario", JSON.stringify(resultado.usuario));
+
+          window.location.href = "homepage.html";
+        } catch (erro) {
+          mensagem.textContent = "Não foi possível conectar com o servidor.";
+          mensagem.className = "erro";
+        } finally {
+          botao.disabled = false;
+          botao.textContent = "Acessar";
+        }
+      });
+    </script>
+  </body>
+</html>

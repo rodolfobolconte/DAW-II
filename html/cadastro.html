@@ -1,0 +1,170 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+    <link rel="stylesheet" href="../css/cadastro.css" />
+
+    <title>Cadastro TRSS</title>
+  </head>
+
+  <body>
+    <div class="container-login">
+      <div class="lado-esquerdo">
+        <img src="../imagens/logo.png" alt="Logo TRSS" />
+
+        <h1>Seja bem vindo!</h1>
+      </div>
+
+      <div class="caixa-login">
+        <h2>Cadastre-se como gerente!</h2>
+
+        <form id="formCadastro">
+          <label for="nome">Nome completo</label>
+          <div class="campo">
+            <input
+              type="text"
+              id="nome"
+              placeholder="Digite seu nome"
+              required
+            />
+          </div>
+
+          <label for="telefone">Telefone</label>
+          <div class="campo">
+            <input
+              type="tel"
+              id="telefone"
+              placeholder="Digite seu telefone"
+              required
+            />
+          </div>
+
+          <label for="cpf">CPF</label>
+          <div class="campo">
+            <input type="text" id="cpf" placeholder="Digite seu CPF" required />
+          </div>
+
+          <label for="email">Email</label>
+          <div class="campo">
+            <input
+              type="email"
+              id="email"
+              placeholder="Digite seu email"
+              required
+            />
+          </div>
+
+          <label for="senha">Senha</label>
+          <div class="campo">
+            <input
+              type="password"
+              id="senha"
+              placeholder="Digite sua senha"
+              required
+            />
+          </div>
+
+          <label for="confirmarSenha">Confirmar senha</label>
+          <div class="campo">
+            <input
+              type="password"
+              id="confirmarSenha"
+              placeholder="Digite a senha novamente"
+              required
+            />
+          </div>
+
+          <button type="submit" class="acessar" id="botaoCadastrar">
+            Cadastrar
+          </button>
+        </form>
+
+        <p id="mensagem"></p>
+
+        <p class="cadastro">
+          Já tem uma conta?
+          <a href="login.html"> Faça login aqui! </a>
+        </p>
+      </div>
+    </div>
+
+    <script>
+      // Endereço do seu backend Express - ajuste conforme onde ele estiver rodando
+      const API_URL = "http://localhost:3000";
+
+      const form = document.getElementById("formCadastro");
+      const mensagem = document.getElementById("mensagem");
+      const botao = document.getElementById("botaoCadastrar");
+
+      form.addEventListener("submit", async (evento) => {
+        evento.preventDefault();
+
+        const nome = document.getElementById("nome").value.trim();
+        const telefone = document.getElementById("telefone").value.trim();
+        const cpf = document.getElementById("cpf").value.trim();
+        const email = document.getElementById("email").value.trim();
+        const senha = document.getElementById("senha").value;
+        const confirmarSenha = document.getElementById("confirmarSenha").value;
+
+        mensagem.textContent = "";
+        mensagem.className = "";
+
+        if (!nome || !telefone || !cpf || !email || !senha || !confirmarSenha) {
+          mensagem.textContent = "Preencha todos os campos.";
+          mensagem.className = "erro";
+          return;
+        }
+
+        if (senha !== confirmarSenha) {
+          mensagem.textContent = "As senhas não são iguais.";
+          mensagem.className = "erro";
+          return;
+        }
+
+        botao.disabled = true;
+        botao.textContent = "Cadastrando...";
+
+        try {
+          const resposta = await fetch(`${API_URL}/cadastro`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              nome,
+              telefone,
+              cpf,
+              email,
+              senha,
+              papel: "gerente",
+            }),
+          });
+
+          const resultado = await resposta.json();
+
+          if (!resposta.ok) {
+            mensagem.textContent =
+              resultado.mensagem || "Não foi possível realizar o cadastro.";
+            mensagem.className = "erro";
+            return;
+          }
+
+          mensagem.textContent =
+            "Cadastro realizado! Verifique seu email e faça login.";
+          mensagem.className = "sucesso";
+          form.reset();
+
+          setTimeout(() => {
+            window.location.href = "login.html";
+          }, 1500);
+        } catch (erro) {
+          mensagem.textContent = "Não foi possível conectar com o servidor.";
+          mensagem.className = "erro";
+        } finally {
+          botao.disabled = false;
+          botao.textContent = "Cadastrar";
+        }
+      });
+    </script>
+  </body>
+</html>

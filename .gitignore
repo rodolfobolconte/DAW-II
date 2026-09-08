@@ -1,0 +1,10 @@
+# Sistema
+.DS_Store
+Thumbs.db
+
+# Dependências (caso use alguma ferramenta futuramente)
+node_modules/
+
+# Variáveis de ambiente
+.env
+.env.local

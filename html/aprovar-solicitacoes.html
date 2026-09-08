@@ -1,0 +1,229 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+    <link rel="stylesheet" href="../css/aprovar-solicitacoes.css" />
+
+    <title>TRSS - Aprovar solicitações</title>
+  </head>
+
+  <body>
+    <div class="container">
+      <aside class="sidebar">
+        <div class="usuario">
+          <div class="avatar">👤</div>
+          <span id="nomeUsuario">Olá!</span>
+        </div>
+
+        <div class="pesquisa"></div>
+
+        <nav class="menu">
+          <a href="homepage.html">
+            <span class="icone">⌂</span>
+            <span>Início</span>
+          </a>
+
+          <a href="monitorar-agricultores.html">
+            <span class="icone">♧</span>
+            <span>Monitorar agricultores</span>
+          </a>
+
+          <a href="adicionar-sementes.html">
+            <span class="icone">▣</span>
+            <span>Gerenciar sementes</span>
+          </a>
+
+          <a href="adicionar-recurso.html">
+            <span class="icone">▤</span>
+            <span>Gerenciar recursos</span>
+          </a>
+
+          <a href="aprovar-solicitacoes.html" class="ativo">
+            <span class="icone">✓</span>
+            <span>Aprovar solicitações e doações</span>
+          </a>
+
+          <a href="#">
+            <span class="icone">☑</span>
+            <span>Avaliar devoluções</span>
+          </a>
+
+          <a href="#" class="sair" id="botaoSair">
+            <span class="icone">↪</span>
+            <span>Sair</span>
+          </a>
+        </nav>
+      </aside>
+
+      <main class="conteudo">
+        <div class="conteudo-interno">
+          <h1 class="titulo">Aprovar solicitações e doações</h1>
+
+          <div class="lista-operacoes" id="listaOperacoes">
+            <p class="carregando">Carregando...</p>
+          </div>
+        </div>
+      </main>
+    </div>
+
+    <script>
+      const API_URL = "http://localhost:3000";
+
+      const sessaoSalva = localStorage.getItem("supabase_session");
+      const usuarioSalvo = localStorage.getItem("usuario");
+
+      if (!sessaoSalva || !usuarioSalvo) {
+        window.location.href = "login.html";
+      }
+
+      const usuario = JSON.parse(usuarioSalvo);
+
+      if (usuario.papel !== "gerente") {
+        window.location.href = "login.html";
+      }
+
+      const sessao = JSON.parse(sessaoSalva);
+      const token = sessao?.access_token;
+
+      document.getElementById("nomeUsuario").textContent =
+        `Olá, ${usuario.nome}`;
+
+      document
+        .getElementById("botaoSair")
+        .addEventListener("click", (evento) => {
+          evento.preventDefault();
+          localStorage.removeItem("supabase_session");
+          localStorage.removeItem("usuario");
+          window.location.href = "login.html";
+        });
+
+      function descreverItem(operacao) {
+        if (operacao.semente) {
+          return `${operacao.semente.tipo} - ${operacao.semente.subtipo}`;
+        }
+        if (operacao.recurso) {
+          return operacao.recurso.nome_recurso;
+        }
+        return "Item não encontrado";
+      }
+
+      function formatarData(dataIso) {
+        const data = new Date(dataIso);
+        return (
+          data.toLocaleDateString("pt-BR") +
+          " às " +
+          data.toLocaleTimeString("pt-BR", {
+            hour: "2-digit",
+            minute: "2-digit",
+          })
+        );
+      }
+
+      //link do whatsapp
+
+      function montarLinkWhatsapp(telefone) {
+        // Remove qualquer caractere que não seja número, por segurança
+        const somenteNumeros = String(telefone).replace(/\D/g, "");
+        return `https://wa.me/55${somenteNumeros}`;
+      }
+
+      //operações pendentes
+
+      async function carregarOperacoes() {
+        const lista = document.getElementById("listaOperacoes");
+
+        try {
+          const resposta = await fetch(`${API_URL}/operacoes/pendentes`, {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          });
+          const resultado = await resposta.json();
+
+          if (!resposta.ok || !resultado.sucesso) {
+            lista.innerHTML = `<p class="carregando">Não foi possível carregar as operações.</p>`;
+            return;
+          }
+
+          if (resultado.operacoes.length === 0) {
+            lista.innerHTML = `<p class="carregando">Nenhuma operação pendente no momento.</p>`;
+            return;
+          }
+
+          lista.innerHTML = resultado.operacoes
+            .map(
+              (operacao) => `
+                <div class="card-operacao" data-id="${operacao.id_operação}">
+                  <div class="topo-card">
+                    <span class="tipo-badge tipo-${operacao.tipo === "doação" ? "doacao" : "solicitacao"}">
+                      ${operacao.tipo === "doação" ? "Doação" : "Solicitação"}
+                    </span>
+                    <span class="data-operacao">${formatarData(operacao.data_operação)}</span>
+                  </div>
+
+                  <div class="corpo-card">
+                    <p class="nome-agricultor">${operacao.nome_agricultor}</p>
+                    <p class="item-operacao">${descreverItem(operacao)}</p>
+                    <p class="quantidade-operacao">Quantidade: ${operacao.quantidade}</p>
+                  </div>
+
+                  <div class="rodape-card">
+                    ${
+                      operacao.telefone_agricultor
+                        ? `<a class="botao-contato" href="${montarLinkWhatsapp(operacao.telefone_agricultor)}" target="_blank" rel="noopener noreferrer">Contatar via WhatsApp</a>`
+                        : `<span class="sem-contato">Sem telefone</span>`
+                    }
+
+                    <div class="acoes">
+                      <button class="botao-recusar" onclick="recusar(${operacao.id_operação})">Recusar</button>
+                      <button class="botao-aprovar" onclick="aprovar(${operacao.id_operação})">Aprovar</button>
+                    </div>
+                  </div>
+                </div>
+              `,
+            )
+            .join("");
+        } catch (erro) {
+          lista.innerHTML = `<p class="carregando">Não foi possível conectar com o servidor.</p>`;
+        }
+      }
+
+      //aprovar ou recusar
+
+      async function processarOperacao(id, acao) {
+        const card = document.querySelector(`[data-id="${id}"]`);
+
+        try {
+          const resposta = await fetch(`${API_URL}/operacoes/${id}/${acao}`, {
+            method: "PUT",
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          });
+          const resultado = await resposta.json();
+
+          if (!resposta.ok || !resultado.sucesso) {
+            alert(resultado.mensagem || "Não foi possível concluir a ação.");
+            return;
+          }
+
+          if (card) card.remove();
+        } catch (erro) {
+          alert("Não foi possível conectar com o servidor.");
+        }
+      }
+
+      function aprovar(id) {
+        processarOperacao(id, "aprovar");
+      }
+
+      function recusar(id) {
+        processarOperacao(id, "recusar");
+      }
+
+      carregarOperacoes();
+    </script>
+  </body>
+</html>

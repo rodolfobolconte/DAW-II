@@ -1,0 +1,194 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+    <link rel="stylesheet" href="../css/homepage.css" />
+
+    <title>TRSS - Painel</title>
+  </head>
+
+  <body>
+    <div class="container">
+      <aside class="sidebar">
+        <div class="usuario">
+          <div class="avatar">👤</div>
+          <span id="nomeUsuario">Olá!</span>
+        </div>
+
+        <div class="pesquisa"></div>
+
+        <nav class="menu">
+          <a href="homepage.html" class="ativo">
+            <span class="icone">⌂</span>
+            <span>Início</span>
+          </a>
+
+          <a href="monitorar-agricultores.html">
+            <span class="icone">♧</span>
+            <span>Monitorar agricultores</span>
+          </a>
+
+          <a href="adicionar-sementes.html">
+            <span class="icone">▣</span>
+            <span>Gerenciar sementes</span>
+          </a>
+
+          <a href="adicionar-recurso.html">
+            <span class="icone">▤</span>
+            <span>Gerenciar recursos</span>
+          </a>
+
+          <a href="aprovar-solicitacoes.html">
+            <span class="icone">✓</span>
+            <span>Aprovar solicitações e doações</span>
+          </a>
+
+          <a href="#">
+            <span class="icone">☑</span>
+            <span>Avaliar devoluções</span>
+          </a>
+
+          <a href="#" class="sair" id="botaoSair">
+            <span class="icone">↪</span>
+            <span>Sair</span>
+          </a>
+        </nav>
+      </aside>
+
+      <main class="conteudo">
+        <div class="conteudo-interno">
+          <h1 class="titulo">Serviços</h1>
+
+          <div class="cards">
+            <a href="monitorar-agricultores.html" class="card">
+              <div class="card-titulo">Monitorar agricultores</div>
+              <div class="card-info" id="infoAgricultores">Carregando...</div>
+            </a>
+
+            <a href="adicionar-sementes.html" class="card">
+              <div class="card-titulo">Gerenciar sementes</div>
+              <div class="card-info" id="infoSementes">Carregando...</div>
+            </a>
+
+            <a href="adicionar-recurso.html" class="card">
+              <div class="card-titulo">Gerenciar recursos</div>
+              <div class="card-info" id="infoRecurso">Carregando...</div>
+            </a>
+
+            <a href="aprovar-solicitacoes.html" class="card">
+              <div class="card-titulo">Aprovar solicitações e doações</div>
+              <div class="card-info">Ver pendências</div>
+            </a>
+
+            <a href="#" class="card">
+              <div class="card-titulo">Avaliar devoluções</div>
+              <div class="card-info">Em breve</div>
+            </a>
+          </div>
+        </div>
+      </main>
+    </div>
+
+    <script>
+      const API_URL = "http://localhost:3000";
+
+      const sessaoSalva = localStorage.getItem("supabase_session");
+      const usuarioSalvo = localStorage.getItem("usuario");
+
+      if (!sessaoSalva || !usuarioSalvo) {
+        window.location.href = "login.html";
+      }
+
+      const usuario = JSON.parse(usuarioSalvo);
+
+      if (usuario.papel !== "gerente") {
+        window.location.href = "login.html";
+      }
+
+      const sessao = JSON.parse(sessaoSalva);
+      const token = sessao?.access_token;
+
+      // Mostra o nome do gerente logado
+      document.getElementById("nomeUsuario").textContent =
+        `Olá, ${usuario.nome}`;
+
+      document
+        .getElementById("botaoSair")
+        .addEventListener("click", (evento) => {
+          evento.preventDefault();
+          localStorage.removeItem("supabase_session");
+          localStorage.removeItem("usuario");
+          window.location.href = "login.html";
+        });
+
+      //contagem das sementes
+
+      async function carregarSementes() {
+        const info = document.getElementById("infoSementes");
+
+        try {
+          const resposta = await fetch(`${API_URL}/sementes`);
+          const resultado = await resposta.json();
+
+          if (!resposta.ok || !resultado.sucesso) {
+            info.textContent = "Não foi possível carregar";
+            return;
+          }
+
+          const total = resultado.sementes.length;
+          info.textContent = `${total} semente${total === 1 ? "" : "s"} disponíve${total === 1 ? "l" : "is"}`;
+        } catch (erro) {
+          info.textContent = "Não foi possível conectar com o servidor";
+        }
+      }
+
+      // Contagem agricultores
+
+      async function carregarAgricultores() {
+        const info = document.getElementById("infoAgricultores");
+
+        try {
+          const resposta = await fetch(`${API_URL}/usuarios`);
+          const resultado = await resposta.json();
+
+          if (!resposta.ok || !resultado.sucesso) {
+            info.textContent = "Não foi possível carregar";
+            return;
+          }
+
+          const total = resultado.usuarios.length;
+          info.textContent = `${total} agricultor${total === 1 ? "" : "es"}`;
+        } catch (erro) {
+          info.textContent = "Não foi possível conectar com o servidor";
+        }
+      }
+
+      // Contagem de recursos
+
+      async function carregarRecursos() {
+        const info = document.getElementById("infoRecurso");
+
+        try {
+          const resposta = await fetch(`${API_URL}/recursos`);
+          const resultado = await resposta.json();
+
+          if (!resposta.ok || !resultado.sucesso) {
+            info.textContent = "Não foi possível carregar";
+            return;
+          }
+
+          const total = resultado.recursos.length;
+          info.textContent = `${total} recurso${total === 1 ? "" : "s"} disponíve${total === 1 ? "l" : "is"}`;
+        } catch (erro) {
+          info.textContent = "Não foi possível conectar com o servidor";
+        }
+      }
+
+      carregarSementes();
+      carregarAgricultores();
+      carregarRecursos();
+    </script>
+  </body>
+</html>

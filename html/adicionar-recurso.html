@@ -1,0 +1,337 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+    <link rel="stylesheet" href="../css/adicionar-recurso.css" />
+
+    <title>TRSS - Gerenciar Recursos</title>
+  </head>
+
+  <body>
+    <div class="container">
+      <aside class="sidebar">
+        <div class="usuario">
+          <div class="avatar">👤</div>
+          <span id="nomeUsuario">Olá!</span>
+        </div>
+
+        <div class="pesquisa"></div>
+
+        <nav class="menu">
+          <a href="homepage.html">
+            <span class="icone">⌂</span>
+            <span>Início</span>
+          </a>
+
+          <a href="monitorar-agricultores.html">
+            <span class="icone">♧</span>
+            <span>Monitorar agricultores</span>
+          </a>
+
+          <a href="adicionar-sementes.html">
+            <span class="icone">▣</span>
+            <span>Gerenciar sementes</span>
+          </a>
+
+          <a href="adicionar-recurso.html" class="ativo">
+            <span class="icone">▤</span>
+            <span>Gerenciar recursos</span>
+          </a>
+
+          <a href="aprovar-solicitacoes.html">
+            <span class="icone">✓</span>
+            <span>Aprovar solicitações</span>
+          </a>
+
+          <a href="#">
+            <span class="icone">☑</span>
+            <span>Avaliar devoluções</span>
+          </a>
+
+          <a href="#" class="sair" id="botaoSair">
+            <span class="icone">↪</span>
+            <span>Sair</span>
+          </a>
+        </nav>
+      </aside>
+
+      <main class="conteudo">
+        <div class="conteudo-interno">
+          <h1 class="titulo" id="tituloForm">Adicionar Recurso</h1>
+
+          <div class="card">
+            <form id="formRecurso">
+              <label for="nome_recurso">Nome do recurso</label>
+              <input type="text" id="nome_recurso" required />
+
+              <label for="quantidade">Quantidade</label>
+              <input
+                type="number"
+                id="quantidade"
+                min="0"
+                step="any"
+                required
+              />
+
+              <div class="botoes-form">
+                <button type="submit" class="enviar" id="botaoEnviar">
+                  Adicionar recurso
+                </button>
+                <button
+                  type="button"
+                  class="cancelar"
+                  id="botaoCancelar"
+                  style="display: none"
+                >
+                  Cancelar edição
+                </button>
+              </div>
+            </form>
+
+            <p id="mensagem"></p>
+          </div>
+
+          <div class="card">
+            <h2 class="subtitulo">Recursos cadastrados</h2>
+            <table>
+              <thead>
+                <tr>
+                  <th>Nome</th>
+                  <th>Quantidade</th>
+                  <th>Ações</th>
+                </tr>
+              </thead>
+              <tbody id="listaRecursos">
+                <tr>
+                  <td colspan="3">Carregando...</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </main>
+    </div>
+
+    <script>
+      const API_URL = "http://localhost:3000";
+
+      const sessaoSalva = localStorage.getItem("supabase_session");
+      const usuarioSalvo = localStorage.getItem("usuario");
+
+      if (!sessaoSalva || !usuarioSalvo) {
+        window.location.href = "login.html";
+      }
+
+      const usuario = JSON.parse(usuarioSalvo);
+
+      if (usuario.papel !== "gerente") {
+        window.location.href = "login.html";
+      }
+
+      document.getElementById("nomeUsuario").textContent =
+        `Olá, ${usuario.nome}`;
+
+      const sessao = JSON.parse(sessaoSalva);
+      const token = sessao?.access_token;
+
+      document
+        .getElementById("botaoSair")
+        .addEventListener("click", (evento) => {
+          evento.preventDefault();
+          localStorage.removeItem("supabase_session");
+          localStorage.removeItem("usuario");
+          window.location.href = "login.html";
+        });
+
+      let recursoEditando = null;
+
+      const form = document.getElementById("formRecurso");
+      const mensagem = document.getElementById("mensagem");
+      const botao = document.getElementById("botaoEnviar");
+      const botaoCancelar = document.getElementById("botaoCancelar");
+      const titulo = document.getElementById("tituloForm");
+
+      function entrarModoEdicao(recurso) {
+        recursoEditando = recurso.id_recurso;
+        document.getElementById("nome_recurso").value = recurso.nome_recurso;
+        document.getElementById("quantidade").value = recurso.quantidade;
+
+        titulo.textContent = "Editar Recurso";
+        botao.textContent = "Salvar alterações";
+        botaoCancelar.style.display = "inline-block";
+
+        window.scrollTo({ top: 0, behavior: "smooth" });
+      }
+
+      function sairModoEdicao() {
+        recursoEditando = null;
+        form.reset();
+        titulo.textContent = "Adicionar Recurso";
+        botao.textContent = "Adicionar recurso";
+        botaoCancelar.style.display = "none";
+      }
+
+      botaoCancelar.addEventListener("click", sairModoEdicao);
+
+      async function carregarRecursos() {
+        const corpoTabela = document.getElementById("listaRecursos");
+
+        try {
+          const resposta = await fetch(`${API_URL}/recursos`);
+          const resultado = await resposta.json();
+
+          if (!resposta.ok || !resultado.sucesso) {
+            corpoTabela.innerHTML = `<tr><td colspan="3">Erro ao carregar recursos.</td></tr>`;
+            return;
+          }
+
+          if (resultado.recursos.length === 0) {
+            corpoTabela.innerHTML = `<tr><td colspan="3">Nenhum recurso cadastrado ainda.</td></tr>`;
+            return;
+          }
+
+          corpoTabela.innerHTML = resultado.recursos
+            .map(
+              (r) => `
+                <tr>
+                  <td>${r.nome_recurso}</td>
+                  <td>
+                    ${r.quantidade}
+                    ${
+                      r.quantidade === 0
+                        ? `<span class="badge-zerado">Estoque zerado</span>`
+                        : ""
+                    }
+                  </td>
+                  <td class="acoes">
+                    <button class="botao-editar" data-id="${r.id_recurso}">Editar</button>
+                    <button class="botao-excluir" data-id="${r.id_recurso}">Excluir</button>
+                  </td>
+                </tr>
+              `,
+            )
+            .join("");
+
+          // Liga os botões de editar
+          document.querySelectorAll(".botao-editar").forEach((btn) => {
+            btn.addEventListener("click", () => {
+              const recurso = resultado.recursos.find(
+                (r) => String(r.id_recurso) === btn.dataset.id,
+              );
+              entrarModoEdicao(recurso);
+            });
+          });
+
+          // Liga os botões de excluir
+          document.querySelectorAll(".botao-excluir").forEach((btn) => {
+            btn.addEventListener("click", () => excluirRecurso(btn.dataset.id));
+          });
+        } catch (erro) {
+          corpoTabela.innerHTML = `<tr><td colspan="3">Não foi possível conectar com o servidor.</td></tr>`;
+        }
+      }
+
+      carregarRecursos();
+
+      // excluir
+
+      async function excluirRecurso(id) {
+        const confirmar = confirm(
+          "Tem certeza que deseja excluir esse recurso?",
+        );
+        if (!confirmar) return;
+
+        try {
+          const resposta = await fetch(`${API_URL}/recursos/${id}`, {
+            method: "DELETE",
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          });
+
+          const resultado = await resposta.json();
+
+          if (!resposta.ok) {
+            alert(resultado.mensagem || "Não foi possível excluir o recurso.");
+            return;
+          }
+
+          carregarRecursos();
+        } catch (erro) {
+          alert("Não foi possível conectar com o servidor.");
+        }
+      }
+
+      // adiciona ou envia
+
+      form.addEventListener("submit", async (evento) => {
+        evento.preventDefault();
+
+        const nome_recurso = document
+          .getElementById("nome_recurso")
+          .value.trim();
+        const quantidade = document.getElementById("quantidade").value;
+
+        mensagem.textContent = "";
+
+        if (!nome_recurso || quantidade === "") {
+          mensagem.textContent = "Preencha todos os campos.";
+          mensagem.className = "erro";
+          return;
+        }
+
+        const estaEditando = recursoEditando !== null;
+
+        const url = estaEditando
+          ? `${API_URL}/recursos/${recursoEditando}`
+          : `${API_URL}/recursos`;
+
+        const metodo = estaEditando ? "PUT" : "POST";
+
+        botao.disabled = true;
+        botao.textContent = estaEditando ? "Salvando..." : "Adicionando...";
+
+        try {
+          const resposta = await fetch(url, {
+            method: metodo,
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${token}`,
+            },
+            body: JSON.stringify({ nome_recurso, quantidade }),
+          });
+
+          const resultado = await resposta.json();
+
+          if (!resposta.ok) {
+            mensagem.textContent =
+              resultado.mensagem ||
+              (estaEditando
+                ? "Não foi possível salvar as alterações."
+                : "Não foi possível adicionar o recurso.");
+            mensagem.className = "erro";
+            return;
+          }
+
+          mensagem.textContent = estaEditando
+            ? "Recurso atualizado com sucesso!"
+            : "Recurso adicionado com sucesso!";
+          mensagem.className = "sucesso";
+
+          sairModoEdicao();
+          carregarRecursos();
+        } catch (erro) {
+          mensagem.textContent = "Não foi possível conectar com o servidor.";
+          mensagem.className = "erro";
+        } finally {
+          botao.disabled = false;
+          botao.textContent = recursoEditando
+            ? "Salvar alterações"
+            : "Adicionar recurso";
+        }
+      });
+    </script>
+  </body>
+</html>

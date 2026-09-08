@@ -1,0 +1,145 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+    <link rel="stylesheet" href="../css/monitoramento.css" />
+
+    <title>TRSS - Monitoramento</title>
+  </head>
+
+  <body>
+    <div class="container">
+      <aside class="sidebar">
+        <div class="usuario">
+          <div class="avatar">👤</div>
+          <span id="nomeUsuario">Olá!</span>
+        </div>
+
+        <div class="pesquisa"></div>
+
+        <nav class="menu">
+          <a href="homepage.html">
+            <span class="icone">⌂</span>
+            <span>Início</span>
+          </a>
+
+          <a href="monitorar-agricultores.html" class="ativo">
+            <span class="icone">♧</span>
+            <span>Monitorar agricultores</span>
+          </a>
+
+          <a href="adicionar-sementes.html">
+            <span class="icone">▣</span>
+            <span>Gerenciar sementes</span>
+          </a>
+
+          <a href="adicionar-recurso.html">
+            <span class="icone">▤</span>
+            <span>Gerenciar recursos</span>
+          </a>
+
+          <a href="aprovar-solicitacoes.html">
+            <span class="icone">✓</span>
+            <span>Aprovar solicitações e doações</span>
+          </a>
+
+          <a href="#">
+            <span class="icone">☑</span>
+            <span>Avaliar devoluções</span>
+          </a>
+
+          <a href="#" class="sair" id="botaoSair">
+            <span class="icone">↪</span>
+            <span>Sair</span>
+          </a>
+        </nav>
+      </aside>
+
+      <main class="conteudo">
+        <div class="conteudo-interno">
+          <h1 class="titulo">Monitoramento</h1>
+
+          <div class="cabecalho-lista">
+            <span>Agricultor</span>
+            <span>Acessar Pendências</span>
+          </div>
+
+          <div class="lista-agricultores" id="listaAgricultores">
+            <p class="carregando">Carregando...</p>
+          </div>
+        </div>
+      </main>
+    </div>
+
+    <script>
+      const API_URL = "http://localhost:3000";
+
+      const sessaoSalva = localStorage.getItem("supabase_session");
+      const usuarioSalvo = localStorage.getItem("usuario");
+
+      if (!sessaoSalva || !usuarioSalvo) {
+        window.location.href = "login.html";
+      }
+
+      const usuario = JSON.parse(usuarioSalvo);
+
+      if (usuario.papel !== "gerente") {
+        window.location.href = "login.html";
+      }
+
+      document.getElementById("nomeUsuario").textContent =
+        `Olá, ${usuario.nome}`;
+
+      document
+        .getElementById("botaoSair")
+        .addEventListener("click", (evento) => {
+          evento.preventDefault();
+          localStorage.removeItem("supabase_session");
+          localStorage.removeItem("usuario");
+          window.location.href = "login.html";
+        });
+
+      // carrega os agricultores e as pendências
+
+      async function carregarAgricultores() {
+        const lista = document.getElementById("listaAgricultores");
+
+        try {
+          const resposta = await fetch(`${API_URL}/monitoramento`);
+          const resultado = await resposta.json();
+
+          if (!resposta.ok || !resultado.sucesso) {
+            lista.innerHTML = `<p class="carregando">Não foi possível carregar os agricultores.</p>`;
+            return;
+          }
+
+          if (resultado.agricultores.length === 0) {
+            lista.innerHTML = `<p class="carregando">Nenhum agricultor cadastrado ainda.</p>`;
+            return;
+          }
+
+          lista.innerHTML = resultado.agricultores
+            .map(
+              (agricultor) => `
+                <a href="pendencia-agricultor.html?cpf=${encodeURIComponent(agricultor.cpf_agricultor)}&nome=${encodeURIComponent(agricultor.nome)}"
+  class="linha-agricultor"
+                >
+                  <span class="nome-agricultor">${agricultor.nome}</span>
+                  <span class="contagem-pendencias">
+                    ${agricultor.pendencias} pendência${agricultor.pendencias === 1 ? "" : "s"}
+                  </span>
+                </a>
+              `,
+            )
+            .join("");
+        } catch (erro) {
+          lista.innerHTML = `<p class="carregando">Não foi possível conectar com o servidor.</p>`;
+        }
+      }
+
+      carregarAgricultores();
+    </script>
+  </body>
+</html>

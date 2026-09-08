@@ -1,0 +1,180 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+    <link rel="stylesheet" href="../css/pendencia-agricultor.css" />
+
+    <title>TRSS - Pendências do agricultor</title>
+  </head>
+
+  <body>
+    <div class="container">
+      <aside class="sidebar">
+        <div class="usuario">
+          <div class="avatar">👤</div>
+          <span id="nomeUsuario">Olá!</span>
+        </div>
+
+        <div class="pesquisa"></div>
+
+        <nav class="menu">
+          <a href="homepage.html">
+            <span class="icone">⌂</span>
+            <span>Início</span>
+          </a>
+
+          <a href="monitorar-agricultores.html" class="ativo">
+            <span class="icone">♧</span>
+            <span>Monitorar agricultores</span>
+          </a>
+
+          <a href="adicionar-semente.html">
+            <span class="icone">▣</span>
+            <span>Gerenciar sementes</span>
+          </a>
+
+          <a href="adicionar-recurso.html">
+            <span class="icone">▤</span>
+            <span>Gerenciar recursos</span>
+          </a>
+
+          <a href="aprovar-solicitacoes.html">
+            <span class="icone">✓</span>
+            <span>Aprovar solicitações e doações</span>
+          </a>
+
+          <a href="#">
+            <span class="icone">☑</span>
+            <span>Avaliar devoluções</span>
+          </a>
+
+          <a href="#" class="sair" id="botaoSair">
+            <span class="icone">↪</span>
+            <span>Sair</span>
+          </a>
+        </nav>
+      </aside>
+
+      <main class="conteudo">
+        <div class="conteudo-interno">
+          <a href="monitorar-agricultores.html" class="voltar">&lt; Voltar</a>
+
+          <h1 class="titulo" id="tituloAgricultor">Pendências</h1>
+
+          <div class="lista-pendencias" id="listaPendencias">
+            <p class="carregando">Carregando...</p>
+          </div>
+        </div>
+      </main>
+    </div>
+
+    <script>
+      const API_URL = "http://localhost:3000";
+
+      // proteção
+
+      const sessaoSalva = localStorage.getItem("supabase_session");
+      const usuarioSalvo = localStorage.getItem("usuario");
+
+      if (!sessaoSalva || !usuarioSalvo) {
+        window.location.href = "login.html";
+      }
+
+      const usuario = JSON.parse(usuarioSalvo);
+
+      if (usuario.papel !== "gerente") {
+        window.location.href = "login.html";
+      }
+
+      document.getElementById("nomeUsuario").textContent =
+        `Olá, ${usuario.nome}`;
+
+      document
+        .getElementById("botaoSair")
+        .addEventListener("click", (evento) => {
+          evento.preventDefault();
+          localStorage.removeItem("supabase_session");
+          localStorage.removeItem("usuario");
+          window.location.href = "login.html";
+        });
+
+      const parametros = new URLSearchParams(window.location.search);
+      const cpf = parametros.get("cpf");
+      const nome = parametros.get("nome");
+
+      if (!cpf) {
+        window.location.href = "monitorar-agricultores.html";
+      }
+
+      document.getElementById("tituloAgricultor").textContent = nome
+        ? `Pendências de ${nome}`
+        : "Pendências";
+
+      function formatarData(dataIso) {
+        if (!dataIso) return "-";
+        const data = new Date(dataIso);
+        return data.toLocaleDateString("pt-BR");
+      }
+
+      function descreverItem(pendencia) {
+        if (pendencia.subtipo) {
+          return `${pendencia.tipo} - ${pendencia.subtipo}`;
+        }
+        return pendencia.tipo || "Item não encontrado";
+      }
+
+      // carrega as pendências
+
+      async function carregarPendencias() {
+        const lista = document.getElementById("listaPendencias");
+
+        try {
+          const resposta = await fetch(
+            `${API_URL}/monitoramento/${encodeURIComponent(cpf)}`,
+          );
+          const resultado = await resposta.json();
+
+          if (!resposta.ok || !resultado.sucesso) {
+            lista.innerHTML = `<p class="carregando">Não foi possível carregar as pendências.</p>`;
+            return;
+          }
+
+          if (resultado.pendencias.length === 0) {
+            lista.innerHTML = `<p class="carregando">Nenhuma pendência encontrada.</p>`;
+            return;
+          }
+
+          lista.innerHTML = resultado.pendencias
+            .map(
+              (pendencia) => `
+                <div class="card-pendencia">
+                  <div class="topo-card">
+                    <span class="tipo-badge tipo-${pendencia.tipo_operação === "doação" ? "doacao" : "solicitacao"}">
+                      ${pendencia.tipo_operação === "doação" ? "Doação" : "Solicitação"}
+                    </span>
+                    <span class="data-pendencia">${formatarData(pendencia.data_operação)}</span>
+                  </div>
+
+                  <p class="item-pendencia">${descreverItem(pendencia)}</p>
+                  <p class="quantidade-pendencia">Quantidade: ${pendencia.quantidade}</p>
+
+                  ${
+                    pendencia.status_pendencia
+                      ? `<span class="status-badge status-${pendencia.status_pendencia}">${pendencia.status_pendencia}</span>`
+                      : ""
+                  }
+                </div>
+              `,
+            )
+            .join("");
+        } catch (erro) {
+          lista.innerHTML = `<p class="carregando">Não foi possível conectar com o servidor.</p>`;
+        }
+      }
+
+      carregarPendencias();
+    </script>
+  </body>
+</html>
