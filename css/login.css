@@ -37,7 +37,6 @@ body {
   text-align: center;
 }
 
-/* Logo */
 
 .lado-esquerdo img {
   width: 190px;
@@ -48,7 +47,6 @@ body {
   margin-bottom: 35px;
 }
 
-/* Texto */
 
 .lado-esquerdo h1 {
   color: white;
@@ -60,9 +58,6 @@ body {
   line-height: 1.2;
 }
 
-/* =========================
-   CAIXA DE LOGIN
-========================= */
 
 .caixa-login {
   width: 540px;
@@ -79,9 +74,6 @@ body {
   box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
 }
 
-/* =========================
-   TÍTULO
-========================= */
 
 .caixa-login h2 {
   color: #176b29;
@@ -93,10 +85,6 @@ body {
   margin-bottom: 26px;
 }
 
-/* =========================
-   LABELS
-========================= */
-
 .caixa-login label {
   color: #176b29;
 
@@ -104,10 +92,6 @@ body {
 
   margin-bottom: 8px;
 }
-
-/* =========================
-   CAMPOS
-========================= */
 
 .email-container,
 .senha-container {
@@ -137,14 +121,12 @@ body {
   background-color: white;
 }
 
-/* Placeholder */
 
 .email-container input::placeholder,
 .senha-container input::placeholder {
   color: #8b8b8b;
 }
 
-/* Quando clicar no campo */
 
 .email-container input:focus,
 .senha-container input:focus {
@@ -153,9 +135,6 @@ body {
   box-shadow: 0 0 0 2px rgba(23, 107, 41, 0.08);
 }
 
-/* =========================
-   BOTÃO ACESSAR
-========================= */
 
 .acessar {
   width: fit-content;
@@ -186,7 +165,6 @@ body {
   font-family: inherit;
 }
 
-/* Hover */
 
 .acessar:hover {
   color: #0e4f1d;
@@ -202,9 +180,6 @@ body {
   text-decoration: none;
 }
 
-/* =========================
-   MENSAGEM DE ERRO/SUCESSO
-========================= */
 
 #mensagem {
   margin-bottom: 16px;
@@ -223,10 +198,6 @@ body {
 #mensagem.sucesso {
   color: #176b29;
 }
-
-/* =========================
-   CADASTRO
-========================= */
 
 .cadastro {
   margin: 0;

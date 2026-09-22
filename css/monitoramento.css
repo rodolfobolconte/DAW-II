@@ -125,10 +125,6 @@ body {
   margin-top: 5px;
 }
 
-/* =========================
-   CONTEÚDO
-========================= */
-
 .conteudo {
   flex: 1;
 
@@ -153,10 +149,6 @@ body {
   margin-bottom: 26px;
 }
 
-/* =========================
-   CABEÇALHO DA LISTA
-========================= */
-
 .cabecalho-lista {
   display: flex;
   justify-content: space-between;
@@ -172,10 +164,6 @@ body {
   font-size: 17px;
   font-weight: 600;
 }
-
-/* =========================
-   LISTA DE AGRICULTORES
-========================= */
 
 .lista-agricultores {
   display: flex;

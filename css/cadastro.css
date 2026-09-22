@@ -37,7 +37,6 @@ body {
   text-align: center;
 }
 
-/* Logo */
 
 .lado-esquerdo img {
   width: 190px;
@@ -48,7 +47,6 @@ body {
   margin-bottom: 35px;
 }
 
-/* Texto */
 
 .lado-esquerdo h1 {
   color: white;
@@ -59,10 +57,6 @@ body {
 
   line-height: 1.2;
 }
-
-/* =========================
-   CAIXA DE CADASTRO
-========================= */
 
 .caixa-login {
   width: 540px;
@@ -79,10 +73,6 @@ body {
   box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
 }
 
-/* =========================
-   TÍTULO
-========================= */
-
 .caixa-login h2 {
   color: #176b29;
 
@@ -93,10 +83,6 @@ body {
   margin-bottom: 22px;
 }
 
-/* =========================
-   LABELS
-========================= */
-
 .caixa-login label {
   color: #176b29;
 
@@ -106,10 +92,6 @@ body {
 
   display: block;
 }
-
-/* =========================
-   CAMPOS (genérico, usado por todos os inputs do form)
-========================= */
 
 .campo {
   width: 100%;
@@ -137,23 +119,16 @@ body {
   background-color: white;
 }
 
-/* Placeholder */
-
 .campo input::placeholder {
   color: #8b8b8b;
 }
 
-/* Quando clicar no campo */
 
 .campo input:focus {
   border-color: #176b29;
 
   box-shadow: 0 0 0 2px rgba(23, 107, 41, 0.08);
 }
-
-/* =========================
-   BOTÃO CADASTRAR
-========================= */
 
 .acessar {
   width: 100%;
@@ -188,8 +163,6 @@ body {
   font-family: inherit;
 }
 
-/* Hover */
-
 .acessar:hover {
   background-color: #0e4f1d;
 }
@@ -199,10 +172,6 @@ body {
 
   cursor: not-allowed;
 }
-
-/* =========================
-   MENSAGEM DE ERRO/SUCESSO
-========================= */
 
 #mensagem {
   margin-bottom: 16px;

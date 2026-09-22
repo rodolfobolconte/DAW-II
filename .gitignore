@@ -2,9 +2,13 @@
 .DS_Store
 Thumbs.db
 
-# Dependências (caso use alguma ferramenta futuramente)
+# Dependências
 node_modules/
+
+# Build do Next.js
+.next/
+out/
 
 # Variáveis de ambiente
 .env
-.env.local
+.env*.local
